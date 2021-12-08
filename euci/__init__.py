@@ -41,18 +41,11 @@ class EUci(Uci):
 
     @staticmethod
     def _get(value, dtype):
-        if dtype == str:
-            return value
-        elif dtype == bool:
-            value = value.lower()
-            if value not in boolean.VALUES:
-                raise ValueError("invalid value '{}' for bool type".format(value))
-            return boolean.VALUES[value]
-        elif dtype == int:
-            return int(value)
-        elif dtype in (ipaddress.IPv4Address, ipaddress.IPv6Address):
+        if dtype == bool:
+            return boolean.VALUES.get(value.lower(), default=False)
+        if dtype in (ipaddress.IPv4Address, ipaddress.IPv6Address):
             return ipaddress.ip_address(value)
-        raise TypeError("'{}' is not supported type of data".format(dtype))
+        return dtype(value)
 
     def get(self, *args, dtype=str, **kwargs):
         """Get configuration value.

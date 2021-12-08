@@ -171,18 +171,18 @@ General usage is same as in case of `Uci`. Every method you have in `Uci` you ha
 also access trough `EUci`. The only difference is that some methods are overloaded
 and provide additional behavior on top of `Uci`.
 
-`EUci` supports following types:
-* __str__: this is default and native UCI type. Anything that is not any other
-  recognized type is expected to be string.
-* __bool__: this is boolean type that has only two states: `True` or `False`. UCI
-  defines special strings that are suppose to be understood by all applications as
-  booleans. Those are `0`, `no`, `off`, `false` and `disabled` for `False` and
-  `1`, `yes`, `on`, `true`, `enabled` for `True`. Any other value in configuration
-  is considered as invalid. `EUci` uses `0` and `1` if it sets this type.
-* __int__: non-standard type for integers. String representations as defined by
-  Python are supported. `EUci` saves integers as decimal numbers.
-* __ipaddress__: instances of `ipaddress.IPv4Address` and `ipaddress.IPv6Address`.
-  Supports string representations supported by `iptaddress.ip_address()`.
+`EUci` supports following types explicitly and any type that can be initialized
+from string without additional info (such as __int__ or __float__):
+* __str__: this is default and native UCI type.
+* __bool__: this is boolean type that has only two states: `True` or `False`.
+  UCI defines special strings that are suppose to be understood by all
+  applications as booleans. Those are `0`, `no`, `off`, `false` and `disabled`
+  for `False` and `1`, `yes`, `on`, `true`, `enabled` for `True`. Any other
+  value in configuration is considered as invalid. `EUci` uses `0` and `1` if it
+  sets this type.
+* __ipaddress__: instances of `ipaddress.IPv4Address` and
+  `ipaddress.IPv6Address`.  Supports string representations supported by
+  `iptaddress.ip_address()`.
 
 #### euci.bolean.VALUES
 This is dictionary mapping boolean strings to `True` or `False`.
@@ -193,8 +193,9 @@ This is overloaded `uci.get` method. Three initial positional arguments are same
 as in case of `uci.get` but behavior changes depending on additional keyword
 arguments.
 
-`dtype` is one of supported types. It ensures that returned value is always of
-given type. For list of supported types please see previous section.
+`dtype` is type that can be initialized from string passed as a single argument.
+It ensures that returned value is always of given type. For list of supported
+types please see previous section.
 
 `default` keyword argument can be used to suppress exception
 `UciExceptionNotFound`. Instead of raising this exception `euci.get` returns
