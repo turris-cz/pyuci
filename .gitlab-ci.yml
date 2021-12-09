@@ -1,8 +1,26 @@
-image: registry.labs.nic.cz/turris/pyuci
+image: $CI_REGISTRY_IMAGE
 
 stages:
+  - docker
   - test
   - pages
+
+docker:
+  stage: docker
+  image: $CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX/docker
+  services:
+    - $CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX/docker:dind
+  tags:
+    - dind
+    - privileged
+  variables:
+    TAG: "$CI_REGISTRY_IMAGE"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $TAG || true
+    - docker build --pull --cache-from $TAG --tag $TAG --file .Dockerfile .
+    - docker push $TAG
 
 unittests:
   stage: test
@@ -18,7 +36,6 @@ unittests:
       cobertura: coverage.xml
   coverage: /^TOTAL.*\s+([^\s]+)%$/
 
-# Let's generate coverage only using Python3
 pages:
   stage: pages
   before_script:
