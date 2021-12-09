@@ -180,30 +180,25 @@ from string without additional info (such as __int__ or __float__):
   for `False` and `1`, `yes`, `on`, `true`, `enabled` for `True`. Any other
   value in configuration is considered as invalid. `EUci` uses `0` and `1` if it
   sets this type.
-* __ipaddress__: instances of `ipaddress.IPv4Address` and
-  `ipaddress.IPv6Address`.  Supports string representations supported by
-  `iptaddress.ip_address()`.
 
 #### euci.bolean.VALUES
 This is dictionary mapping boolean strings to `True` or `False`.
 Useful when getting whole config section and processing options individually.
 
-#### euci.get(config, section, option, dtype=str, default=?, list=?)
+#### euci.get(config, section, option, dtype=str, convert=None, list=False, default=NoDefault)
 This is overloaded `uci.get` method. Three initial positional arguments are same
 as in case of `uci.get` but behavior changes depending on additional keyword
 arguments.
 
 `dtype` is type that can be initialized from string passed as a single argument.
 It ensures that returned value is always of given type. For list of supported
-types please see previous section.
+types please see previous section. The UciExceptionNotFound is raised if value
+can't be converted to specified type.
 
-`default` keyword argument can be used to suppress exception
-`UciExceptionNotFound`. Instead of raising this exception `euci.get` returns
-provided default. Note that default is also processed to be converted to `dtype`
-so you are unable for example to get `None` if you set `dtype=str`. It would
-instead returned `"None"`. This has no effect if no `section` argument is
-provided. Meaning that returned dictionary never contains anything else than
-strings as values.
+`convert` can be a function that is called to do custom conversion. You can use
+this if simple dtype is not enough for you. The reason for using this is to
+convert to custom type or to provide additional info such as base to integer.
+The function should accept value to convert as argument and return result.
 
 `list` is bool specifying if `euci.get` should ensure that returned value is
 considered as UCI option or as list. This is effectively difference between
@@ -211,11 +206,18 @@ returning value of `dtype` or tuple of `dtype` values. If configuration contains
 UCI option with appropriate name but `list` is set to `True` then `euci.get`
 returns tuple with value of that option. On the other hand if configuration
 contains UCI list with appropriate name but `list` is set to `False` then
-`euci.get` returns always value of type `dtype`. It returns first one if multiple
-UCI lists were provided. Behavior is unchanged compared to not using `list`
-keyword in case of UCI option and `list=False` and UCI list and `list=True`. Note
-that this keyword has no effect if `section` is not provided. Meaning that
-in such case dictionary is always returned.
+`euci.get` returns always value of type `dtype`. It returns first one if
+multiple UCI lists were provided. The default is `False` so you should always
+specify it as `True` when you are working with lists. Note that this keyword
+has no effect if `section` is not provided. Meaning that in such case
+dictionary is always returned.
+
+`default` keyword argument can be used to suppress exception
+`UciExceptionNotFound`. Instead of raising this exception `euci.get` returns
+provided default. Note that default is never processed by conversion, so you
+have to make sure that it is already of correct type or expect that it is might
+not be. This has no effect if no `section` argument is provided. Meaning that
+returned dictionary never contains anything else than strings as values.
 
 #### euci.set(config, section, option, value)
 This is overloaded `uci.set` method. It is not changed in form of how it is

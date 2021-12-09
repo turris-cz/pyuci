@@ -5,9 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `convert` argument for `EUci.get`. It provides a way to convert values to any
+  type with custom function.
+
 ### Changed
+- `list` argument for `EUci.get` is now required to be set to `True` for lists
+  otherwise only first value is returned. This is removal of auto-detection of
+  lists. The get of list has to be now always explictly stated.
 - `dtype` argument for `EUci.get` can now be any type that can be initialized
-  with string as a single argument (such as `int("42")`
+  with string as a single argument (such as `int("42")`.
+- `default` argument for `EUci.get` now uses object instance `NoDefault` to
+  detect that there is no default instead of presence of keyword argument.
 
 
 ## [0.8.1] - 2020-11-20

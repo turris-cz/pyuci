@@ -23,81 +23,85 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import collections.abc
-import ipaddress
+import typing
 
 from uci import Uci, UciExceptionNotFound
+
 from . import boolean
 
 
 def _is_iter(data):
-    """Check if data is instance of iterable with exclusion of string as the only standard iterable type we handle.
-    """
+    """Check if data is instance of iterable with exclusion of string as the only standard iterable type we handle."""
     return isinstance(data, collections.abc.Iterable) and not isinstance(data, str)
 
 
+class NoDefaltType:
+    """Type used to identify if there is some default provided to get method of EUci."""
+
+    def __str__(self):
+        return "NoDefault"
+
+
+NoDefault = NoDefaltType()
+
+
 class EUci(Uci):
-    """Extended Uci wrapper
-    """
+    """Extended Uci wrapper"""
 
-    @staticmethod
-    def _get(value, dtype):
-        if dtype == bool:
-            return boolean.VALUES.get(value.lower(), default=False)
-        if dtype in (ipaddress.IPv4Address, ipaddress.IPv6Address):
-            return ipaddress.ip_address(value)
-        return dtype(value)
-
-    def get(self, *args, dtype=str, **kwargs):
+    def get(
+        self,
+        *args,
+        dtype: type = str,
+        convert: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None,
+        list: bool = False,
+        default: typing.Any = NoDefault,
+    ):
         """Get configuration value.
 
-        Up to three positional arguments are expected. Those are uci "config"
-        "section" and "option" in this order. "config" is the only one that is
-        really required.
+        Up to three positional arguments are expected. Those are uci "config" "section" and "option" in this order.
+        "config" is the only one that is really required.
 
-        Dictionary with all sections is returned when only "config" is
-        provided. If "section" and optionally also "option" is provided then it
-        returns single value or tuple of values in case of lists.
+        Dictionary with all sections is returned when only "config" is provided. If "section" and optionally also
+        "option" is provided then it returns single value or tuple of values in case of lists.
 
         Following additional optional keywords arguments are available:
-        dtype: data type to be returned. Currently supported are: str, bool and
-            int. If you don't specify this then it defaults to str. If value
-            cannot be converted to specified type then it raises ValueError.
+        dtype: data type to be returned. The supported is any type that can be initialized from string without
+            additional parameters (such as int(str)). The default value is returned if error is raised on conversion and
+            exception is logged to logging framework. The UciExceptionNotFound is raised if there is no default value.
+        convert: the alternative to dtype. It is applied after dtype. It is not protected against the exception. It is
+            expected to be a function that gets value as argument and should return convertion result.
         list: bool setting if option is expected to be list. This ensures that
             this method always returns tuple or on the other hand never
             returns one.
-        default: default value to be returned instead of raising
-            UciExceptionNotFound.
+        default: default value to be returned instead of raising UciExceptionNotFound. Note that this value is returned
+            as is without conversion. You have to ensure that it has same type as you expect.
 
-        Note that dtype and list are considered only if at least "section" is
-        provided.
+        Note that dtype, convert and list are considered only if at least "section" is provided.
 
-        When requested value is not found then this raises UciExceptionNotFound.
-        ValueError is raised in case of value that can't be converted to dtype.
+        When requested value is not found (including when it can't be converted) then this raises UciExceptionNotFound
+        unless you specify default, in that case the default value is returned.
         """
-        kwdiff = set(kwargs).difference({'default', 'list'})
-        if kwdiff:
-            raise TypeError("'{}' is an invalid keyword argument for this function"
-                            .format(next(iter(kwdiff))))
-
         try:
             values = super().get(*args)
         except UciExceptionNotFound:
-            if 'default' not in kwargs:
-                raise
-            values = kwargs['default']
+            if default is not NoDefault:
+                return default
+            raise
         if len(args) < 2:
             # Only "config" was provided, values is dictionary and no conversion is provided.
             return values
 
-        if _is_iter(values):
-            result = tuple((self._get(str(value), dtype) for value in values))
-        else:
-            result = self._get(str(values), dtype)
-        if 'list' in kwargs:
-            if isinstance(result, tuple) == bool(kwargs['list']):
-                return result
-            if kwargs['list']:
-                return (result,)
+        def conv(value):
+            try:
+                result = boolean.VALUES[value.lower()] if dtype == bool else dtype(value)
+            except Exception as exc:
+                if default is not NoDefault:
+                    return default
+                raise UciExceptionNotFound from exc
+            return convert(result) if convert is not None else result
+
+        result = tuple(conv(str(value)) for value in (values if _is_iter(values) else (values,)))
+        if not list:
             return result[0]
         return result
 
@@ -105,7 +109,6 @@ class EUci(Uci):
     def _set_value(value, dtype):
         if dtype == bool:
             return boolean.TRUE if value else boolean.FALSE
-        # This implements handler for str and int type as well as fallback
         return str(value)
 
     def set(self, *args):
@@ -127,8 +130,7 @@ class EUci(Uci):
         if _is_iter(args[-1]):
             # We consider first value as authoritative for type
             dtype = type(args[-1][0]) if args[-1] else str
-            super().set(*args[:-1], tuple(
-                (self._set_value(value, dtype) for value in args[-1])))
+            super().set(*args[:-1], tuple((self._set_value(value, dtype) for value in args[-1])))
         else:
             super().set(*args[:-1], self._set_value(args[-1], type(args[-1])))
 

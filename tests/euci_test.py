@@ -17,7 +17,7 @@
 import pytest
 import euci
 
-from ipaddress import IPv4Address, IPv6Address
+from ipaddress import ip_address, IPv4Address, IPv6Address
 
 
 def test_get_string(tmpdir):
@@ -30,7 +30,7 @@ config str 'str'
 """)
     u = euci.EUci(confdir=tmpdir.strpath)
     assert u.get('test', 'str', 'foo') == 'value'
-    assert u.get('test', 'str', 'list') == ('value1', 'value2')
+    assert u.get('test', 'str', 'list', list=True) == ('value1', 'value2')
 
 
 def test_set_string(tmpdir):
@@ -42,7 +42,7 @@ config testing 'testing'
     u.set('test', 'testing', 'foo', 'value')
     u.set('test', 'testing', 'list', ('f', 'o', 'o'))
     assert u.get('test', 'testing', 'foo') == 'value'
-    assert u.get('test', 'testing', 'list') == ('f', 'o', 'o')
+    assert u.get('test', 'testing', 'list', list=True) == ('f', 'o', 'o')
 
 
 def test_get_boolean(tmpdir):
@@ -80,13 +80,13 @@ config list 'list'
     assert u.get('test', 'state', 'true', dtype=bool)
     assert u.get('test', 'bool', 'true', dtype=bool)
     assert u.get('test', 'bled', 'true', dtype=bool)
-    assert u.get('test', 'list', 'true', dtype=bool) == (True, True)
+    assert u.get('test', 'list', 'true', dtype=bool, list=True) == (True, True)
     assert not u.get('test', 'integer', 'false', dtype=bool)
     assert not u.get('test', 'word', 'false', dtype=bool)
     assert not u.get('test', 'state', 'false', dtype=bool)
     assert not u.get('test', 'bool', 'false', dtype=bool)
     assert not u.get('test', 'bled', 'false', dtype=bool)
-    assert u.get('test', 'list', 'false', dtype=bool) == (False, False)
+    assert u.get('test', 'list', 'false', dtype=bool, list=True) == (False, False)
 
 
 def test_set_boolean(tmpdir):
@@ -100,7 +100,7 @@ config testing 'testing'
     u.set('test', 'testing', 'list', (True, False, True, False))
     assert u.get('test', 'testing', 'true') == '1'
     assert u.get('test', 'testing', 'false') == '0'
-    assert u.get('test', 'testing', 'list') == ('1', '0', '1', '0')
+    assert u.get('test', 'testing', 'list', list=True) == ('1', '0', '1', '0')
 
 
 def test_get_integer(tmpdir):
@@ -117,7 +117,7 @@ config integer 'integer'
     u = euci.EUci(confdir=tmpdir.strpath)
     assert u.get('test', 'integer', 'plus', dtype=int) == 42
     assert u.get('test', 'integer', 'minus', dtype=int) == -42
-    assert u.get('test', 'integer', 'primes', dtype=int) == (2, 3, 5, 7)
+    assert u.get('test', 'integer', 'primes', dtype=int, list=True) == (2, 3, 5, 7)
 
 
 def test_set_integer(tmpdir):
@@ -131,7 +131,7 @@ config testing 'testing'
     u.set('test', 'testing', 'primes', (2, 3, 5, 7))
     assert u.get('test', 'testing', 'plus') == '42'
     assert u.get('test', 'testing', 'minus') == '-42'
-    assert u.get('test', 'testing', 'primes') == ('2', '3', '5', '7')
+    assert u.get('test', 'testing', 'primes', list=True) == ('2', '3', '5', '7')
 
 
 def test_get_default(tmpdir):
@@ -146,7 +146,7 @@ config testing 'testing'
     assert u.get('test', 'str', 'foo', dtype=bool, default='true')
     assert u.get('test', 'str', 'foo', dtype=bool, default=True)
     assert u.get('test', 'str', 'foo', dtype=int, default=-42) == -42
-    assert u.get('test', 'str', 'foo', dtype=int, default='-42') == -42
+    assert u.get('test', 'str', 'foo', dtype=int, default=None) is None
 
 
 def test_context(tmpdir):
@@ -190,12 +190,10 @@ config testing 'testing'
     )
     with euci.EUci(confdir=tmpdir.strpath) as u:
         assert u.get('test', 'testing', 'one', dtype=IPv4Address) == IPv4Address('192.168.1.1')
-        assert u.get('test', 'testing', 'one', dtype=IPv6Address) == IPv4Address('192.168.1.1')
-        assert u.get('test', 'testing', 'two', dtype=IPv4Address) == IPv6Address('::1')
         assert u.get('test', 'testing', 'two', dtype=IPv6Address) == IPv6Address('::1')
-        assert u.get('test', 'testing', 'three', dtype=IPv4Address, list=True) == (
+        assert u.get('test', 'testing', 'three', dtype=ip_address, list=True) == (
             IPv6Address('::2'), IPv4Address('10.0.0.1')
         )
-        assert u.get('test', 'testing', 'three', dtype=IPv6Address, list=True) == (
+        assert u.get('test', 'testing', 'three', dtype=ip_address, list=True) == (
             IPv6Address('::2'), IPv4Address('10.0.0.1')
         )
