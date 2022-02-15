@@ -133,33 +133,3 @@ class EUci(Uci):
             super().set(*args[:-1], tuple((self._set_value(value, dtype) for value in args[-1])))
         else:
             super().set(*args[:-1], self._set_value(args[-1], type(args[-1])))
-
-    # Following methods are obsolete and should not be exnteded nor used in new code #
-
-    def get_boolean(self, *args, **kwargs):
-        """This is obsolete! Please use instead: set(config, section, option, dtype=bool)
-        Returns given UCI config as a boolean.
-        Value '0', 'no', 'off', 'false' or 'disabled' is returned as False.
-        Value '1' , 'yes', 'on', 'true' or 'enabled' is returned as True.
-        ValueError is raised on any other value.
-        """
-        return self.get(*args, dtype=bool, **kwargs)
-
-    def set_boolean(self, *args):
-        """This is obsolete! Please use instead: set(config, section, option, value, bool(value))
-        Sets boolean value to given UCI config.
-        """
-        self.set(*args[:-1], bool(args[-1]))
-
-    def get_integer(self, *args, **kwargs):
-        """This is obsolete! Please use instead: set(config, section, option, dtype=int)
-        Returns given UCI config as an integer.
-        Raises ValueError if config value can't be converted to int.
-        """
-        return self.get(*args, dtype=int, **kwargs)
-
-    def set_integer(self, *args):
-        """This is obsolete! Please use instead: set(config, section, option, value, int(value))
-        Sets integer to given UCI config.
-        """
-        self.set(*args[:-1], int(args[-1]))

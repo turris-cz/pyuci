@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `default` argument for `EUci.get` now uses object instance `NoDefault` to
   detect that there is no default instead of presence of keyword argument.
 
+### Removed
+- obsolete "get" methods in `EUci`
+
 
 ## [0.8.1] - 2020-11-20
 ### Fixed
