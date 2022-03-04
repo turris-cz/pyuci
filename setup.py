@@ -16,7 +16,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pyuci',
-    version='0.8.1',
+    version='0.9.0',
     author='CZ.NIC z.s.p.o',
     author_email='karel.koci@nic.cz',
     description='Python UCI bindings',
