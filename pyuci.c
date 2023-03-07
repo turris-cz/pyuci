@@ -269,10 +269,29 @@ static PyObject *pyuci_delete(uci_object *self, PyObject *args) {
 }
 
 static PyObject *pyuci_add(uci_object *self, PyObject *args) {
-	// TODO we need findpkg
-	PyErr_SetNone(PyExc_NotImplementedError);
+	const char *package;
+	const char *section_type;
+	struct uci_package *p = NULL;
+	struct uci_section *s = NULL;
+
+	if (!PyArg_ParseTuple(args, "ss", &package, &section_type))
+		return NULL;
+
+	if (uci_load(self->ctx, package, &p))
+		return pyuci_error(self, UciException);
+
+	if (uci_add_section(self->ctx, p, section_type, &s))
+		return pyuci_error(self, UciException);
+
+	if (uci_save(self->ctx, p))
+		return pyuci_error(self, UciException);
+
+	PyObject *res = PyUnicode_FromString(s->e.name);
+
+	uci_unload(self->ctx, p);
+
 	self->tainted = true;
-	return NULL;
+	return res;
 }
 
 static PyObject *pyuci_rename(uci_object *self, PyObject *args) {

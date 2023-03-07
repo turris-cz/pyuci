@@ -93,9 +93,9 @@ This also allows you to set name for section (to create named section or change
 name). Format of this function to be used for this is: `uci.set(config, section,
 value)`.
 
-#### uci.add(...)
-This is suppose to add new anonymous section. This is currently not implemented
-and thus adding anonymous sections with pyuci is not supported.
+#### uci.add(config, section_type)
+Add a new anonymous section of type `section_type`. The auto-generated name of the
+new section is returned.
 
 #### uci.delete(config, section, option)
 This method allows you to remove sections and options from configuration. `config`

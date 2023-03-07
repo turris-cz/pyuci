@@ -1,4 +1,4 @@
-# Copyright 2018, CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright 2023, CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This file is part of the PyUCI.
 #
@@ -65,6 +65,24 @@ def test_commit(tmpdir):
     assert cnf.read() == """
 config testing 'testing'
 \toption variable 'value'
+
+"""
+
+
+def test_add(tmpdir):
+    'Test add method. This depends on working test_commit.'
+    cnf = tmpdir.join('test')
+    cnf.write("")
+    u = uci.Uci(confdir=tmpdir.strpath)
+    section = u.add('test', 'test_type')
+    u.add('test', 'test_type2')
+    u.set('test', section, 'variable', 'value')
+    u.commit('test')
+    assert cnf.read() == """
+config test_type
+\toption variable 'value'
+
+config test_type2
 
 """
 
