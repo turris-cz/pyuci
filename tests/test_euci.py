@@ -1,4 +1,4 @@
-# Copyright 2020, CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright 2023, CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This file is part of the PyUCI.
 #
@@ -197,3 +197,23 @@ config testing 'testing'
         assert u.get('test', 'testing', 'three', dtype=ip_address, list=True) == (
             IPv6Address('::2'), IPv4Address('10.0.0.1')
         )
+
+
+def test_add(tmpdir):
+    "Test adding section"
+    cnf = tmpdir.join('test')
+    cnf.write("")
+
+    with euci.EUci(confdir=tmpdir.strpath) as u:
+        section = u.add('test', 'test_type')
+        u.add('test', 'test_type2', 'named')
+        u.set('test', section, 'variable', 'value')
+        u.commit('test')
+
+    assert cnf.read() == """
+config test_type
+\toption variable 'value'
+
+config test_type2 'named'
+
+"""

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (c) 2023, CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -133,3 +133,22 @@ class EUci(Uci):
             super().set(*args[:-1], tuple((self._set_value(value, dtype) for value in args[-1])))
         else:
             super().set(*args[:-1], self._set_value(args[-1], type(args[-1])))
+
+    def add(
+        self,
+        config: str,
+        section_type: str,
+        section_name: typing.Optional[str] = None
+    ) -> str:
+        """Create new section in uci config anonymous or named
+
+        If section_name is not present otherwise anonymous section is created
+
+        add("openvpn", "server")
+        add("openvpn", "server", "my_server")
+        """
+        if name := section_name:
+            self.set(config, section_name, section_type)
+            return name
+        else:
+            return super().add(config, section_type)
