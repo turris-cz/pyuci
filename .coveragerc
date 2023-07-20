@@ -1,0 +1,12 @@
+[report]
+precision = 1
+show_missing = true
+skip_covered = true
+
+[run]
+source =
+	euci
+	uci
+
+omit =
+  tests/*

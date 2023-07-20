@@ -2,8 +2,11 @@ image: $CI_REGISTRY_IMAGE
 
 stages:
   - docker
-  - test
   - pages
+  - lint
+  - test
+  - build
+  - publish
 
 docker:
   stage: docker
@@ -21,22 +24,8 @@ docker:
     - docker pull $TAG || true
     - docker build --pull --cache-from $TAG --tag $TAG --file .Dockerfile .
     - docker push $TAG
-
-unittests:
-  stage: test
-  before_script:
-    - pip3 install .
-    - pip3 install pytest-cov  # This can be removed once base image is updated
-    - export LD_LIBRARY_PATH=/usr/local/lib
-  script:
-    - python3 -m pytest -v --junitxml=report.xml --cov-report xml:coverage.xml --cov-report term --cov=euci tests
-  artifacts:
-    reports:
-      junit: report.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
-  coverage: /^TOTAL.*\s+([^\s]+)%$/
+  only:
+  - master
 
 pages:
   stage: pages
@@ -53,3 +42,29 @@ pages:
       - public
   only:
   - master
+
+include:
+  - remote: "https://gitlab.nic.cz/turris/foris-controller/packages/-/raw/master/templates/python/base.yml"
+  - remote: "https://gitlab.nic.cz/turris/foris-controller/packages/-/raw/master/templates/python/linters.yml"
+  - remote: "https://gitlab.nic.cz/turris/foris-controller/packages/-/raw/master/templates/python/test_and_coverage.yml"
+  - remote: "https://gitlab.nic.cz/turris/foris-controller/packages/-/raw/master/templates/python/build_and_publish.yml"
+
+lint::python::tox:
+  variables:
+    IMAGE: registry.nic.cz/turris/foris-ci/ci-tests
+
+test::python:
+  image: registry.nic.cz/turris/foris-ci/ci-tests
+  parallel:
+    matrix:
+      - PYTHON: ['3.9.16', '3.10.11', '3.11.3']
+  before_script:
+    - pyenv local $PYTHON
+
+build::python:
+  image: registry.nic.cz/turris/foris-ci/ci-tests
+  parallel:
+    matrix:
+      - PYTHON: ['3.9.16', '3.10.11', '3.11.3']
+  before_script:
+    - pyenv local $PYTHON
