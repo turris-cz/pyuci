@@ -66,15 +66,15 @@ static PyObject *pyuci_enter(uci_object *self, PyObject *args) {
 }
 
 static void commit_all(struct uci_context *ctx) {
-	struct uci_ptr ptr;
-	memset(&ptr, 0, sizeof ptr);
-	struct uci_element *e, *tmp;
+	struct uci_element *e, *tmp, *last = list_to_element(ctx->root.prev);
 	uci_foreach_element_safe(&ctx->root, tmp, e) {
 		struct uci_package *p = uci_to_package(e);
-		if (ptr.p && (ptr.p != p))
-			continue;
-		ptr.p = p;
 		uci_commit(ctx, &p, false);
+		// uci_commit may reload packages, adding them to the end of the list. This can
+		// result in an infinite loop, so avoid processing any elements which were added
+		// after we started.
+		if(e == last)
+			break;
 	}
 }
 
