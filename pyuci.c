@@ -134,7 +134,12 @@ static PyObject *pyuci_section(struct uci_section *sec) {
 	uci_foreach_element(&sec->options, e) {
 		struct uci_option *o = uci_to_option(e);
 		PyObject *opt = pyuci_option(o);
+		if(!opt) {
+			Py_DECREF(ret);
+			return NULL;
+		}
 		PyDict_SetItemString(ret, o->e.name, opt);
+		Py_DECREF(opt);
 	}
 
 	return ret;
@@ -148,7 +153,12 @@ static PyObject *pyuci_package(struct uci_package *pkg) {
 	struct uci_element *e;
 	uci_foreach_element(&pkg->sections, e) {
 		PyObject *sec = pyuci_section(uci_to_section(e));
+		if(!sec) {
+			Py_DECREF(ret);
+			return NULL;
+		}
 		PyDict_SetItemString(ret, e->name, sec);
+		Py_DECREF(sec);
 		index++;
 	}
 	return ret;
