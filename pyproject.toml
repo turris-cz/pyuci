@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyuci"
+dynamic = []
+description = "Python UCI bindings"
+readme = "README.md"
+license = {file = "LICENSE"}
+version = "0.10.1"
+requires-python = ">=3.7"
+authors = [
+    { name = "CZ.NIC z.s.p.o", email = "karel.koci@nic.cz" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://gitlab.nic.cz/turris/pyuci"
