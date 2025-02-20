@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, CZ.NIC z.s.p.o. (http://www.nic.cz/)
+ * Copyright 2025, CZ.NIC z.s.p.o. (http://www.nic.cz/)
  *
  * This file is part of the PyUCI.
  *
@@ -24,6 +24,7 @@
 // Uci exceptions
 static PyObject *UciException;
 static PyObject *UciExcNotFound;
+static PyObject *UciExcInvalidInput;
 
 // Python Uci object handle
 typedef struct {
@@ -165,7 +166,7 @@ static PyObject *pyuci_package(struct uci_package *pkg) {
 }
 
 // Common arguments lookup (package, section, option)
-static bool lookup_ptr(uci_object *self, PyObject *args, struct uci_ptr *ptr) {
+static int lookup_ptr(uci_object *self, PyObject *args, struct uci_ptr *ptr) {
 	memset(ptr, 0, sizeof *ptr);
 
 	if (!PyArg_ParseTuple(args, "s|ss", &ptr->package, &ptr->section, &ptr->option))
@@ -173,18 +174,33 @@ static bool lookup_ptr(uci_object *self, PyObject *args, struct uci_ptr *ptr) {
 	if (ptr->section == ptr->option && ptr->option == NULL) {
 		const char *str = ptr->package;
 		memset(ptr, 0, sizeof *ptr);
-		uci_lookup_ptr(self->ctx, ptr, (char*)str, true);
+		return uci_lookup_ptr(self->ctx, ptr, (char*)str, true);
 	}
-	uci_lookup_ptr(self->ctx, ptr, NULL, true);
-	return true;
+	return uci_lookup_ptr(self->ctx, ptr, NULL, true);
+}
+
+static inline int set_lookup_error(int retval) {
+	switch (retval) {
+		case UCI_OK:
+			break;
+		case UCI_ERR_INVAL:
+		case UCI_ERR_PARSE:
+			PyErr_SetNone(UciExcInvalidInput);
+			break;
+		case UCI_ERR_NOTFOUND:
+			PyErr_SetNone(UciExcNotFound);
+			break;
+		default:
+			PyErr_SetNone(UciException);
+	}
+	return retval;
 }
 
 static PyObject *pyuci_get_common(uci_object *self, PyObject *args, bool all) {
 	struct uci_ptr ptr;
 
-	if (!lookup_ptr(self, args, &ptr))
+	if (UCI_OK != set_lookup_error(lookup_ptr(self, args, &ptr)))
 		return NULL;
-	uci_lookup_ptr(self->ctx, &ptr, NULL, true);
 	if (!(ptr.flags & UCI_LOOKUP_COMPLETE)) {
 		PyErr_SetNone(UciExcNotFound);
 		return NULL;
@@ -269,7 +285,7 @@ static PyObject *pyuci_set(uci_object *self, PyObject *args) {
 
 static PyObject *pyuci_delete(uci_object *self, PyObject *args) {
 	struct uci_ptr ptr;
-	if (!lookup_ptr(self, args, &ptr))
+	if (UCI_OK != set_lookup_error(lookup_ptr(self, args, &ptr)))
 		return NULL;
 
 	uci_delete(self->ctx, &ptr);
@@ -374,7 +390,7 @@ enum pkg_cmd {
 
 static PyObject *package_cmd(uci_object *self, PyObject *args, enum pkg_cmd cmd) {
 	struct uci_ptr ptr;
-	if (!lookup_ptr(self, args, &ptr))
+	if (UCI_OK != set_lookup_error(lookup_ptr(self, args, &ptr)))
 		return NULL;
 
 	struct uci_element *e, *tmp;
@@ -557,6 +573,10 @@ bool pyuci_object_init(PyObject *module) {
 	UciExcNotFound = PyErr_NewException("uci.UciExceptionNotFound", UciException, NULL);
 	Py_INCREF(UciExcNotFound);
 	PyModule_AddObject(module, "UciExceptionNotFound", UciExcNotFound);
+
+	UciExcInvalidInput = PyErr_NewException("uci.UciExceptionInvalidInput", UciException, NULL);
+	Py_INCREF(UciExcInvalidInput);
+	PyModule_AddObject(module, "UciExceptionInvalidInput", UciExcInvalidInput);
 
 	return true;
 }

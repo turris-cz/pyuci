@@ -1,4 +1,4 @@
-# Copyright 2023, CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright 2025, CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This file is part of the PyUCI.
 #
@@ -42,6 +42,31 @@ config testlist 'testlist'
     assert u.get('test', 'testing', 'two') == '1'
     assert u.get('test', 'testlist', 'list1') == ('42',)
     assert u.get('test', 'testlist', 'list2') == ('once', 'twice', 'thrice')
+
+
+@pytest.mark.parametrize(
+    "query",
+    (
+        'test.section_type[0].one',
+        'test.section_type[1].two',
+        'test.ttt[.three',
+        'test.ttt.three.four',
+    )
+)
+def test_get_invalid(tmpdir, query):
+    'Test that get method handles incorrect input well'
+    tmpdir.join('test').write("""
+config section_type
+    option one '0'
+    option two '1'
+
+config section_type 'ttt'
+    option three '0'
+    option four '4'
+""")
+    u = uci.Uci(confdir=tmpdir.strpath)
+    with pytest.raises(uci.UciExceptionInvalidInput):
+        u.get(query)
 
 
 def test_set(tmpdir):
