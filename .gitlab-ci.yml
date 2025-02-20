@@ -30,7 +30,8 @@ docker:
 pages:
   stage: pages
   before_script:
-    - COVERAGE=y python3 setup.py install
+    - sed -i 's/^#extra-/extra-/' pyproject.toml
+    - pip install .
     - export LD_LIBRARY_PATH=/usr/local/lib
     - python3 -m pytest tests
   script:

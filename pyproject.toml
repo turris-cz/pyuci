@@ -22,3 +22,16 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://gitlab.nic.cz/turris/pyuci"
+
+[tool.setuptools]
+packages = ["euci"]
+
+[[tool.setuptools.ext-modules]]
+name = "uci"
+sources = ["ucimodule.c", "pyuci.c", "pyhelper.c"]
+language = "c"
+libraries = ["uci"]
+
+# Uncomment to enable coverage measurement
+#extra-compile-args = ["-fprofile-arcs", "-ftest-coverage"]
+#extra-link-args = ["-fprofile-arcs"]
