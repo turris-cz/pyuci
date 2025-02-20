@@ -58,7 +58,7 @@ test::python:
   image: registry.nic.cz/turris/foris-ci/ci-tests
   parallel:
     matrix:
-      - PYTHON: ['3.9.16', '3.10.11', '3.11.3']
+      - PYTHON: ['3.9.16', '3.10.11', '3.11.3', '3.12.9']
   before_script:
     - pyenv local $PYTHON
 
@@ -66,6 +66,6 @@ build::python:
   image: registry.nic.cz/turris/foris-ci/ci-tests
   parallel:
     matrix:
-      - PYTHON: ['3.9.16', '3.10.11', '3.11.3']
+      - PYTHON: ['3.9.16', '3.10.11', '3.11.3', '3.12.9']
   before_script:
     - pyenv local $PYTHON
