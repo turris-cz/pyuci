@@ -8,7 +8,7 @@ dynamic = []
 description = "Python UCI bindings"
 readme = "README.md"
 license = {file = "LICENSE"}
-version = "0.10.2"
+version = "0.10.3"
 requires-python = ">=3.7"
 authors = [
     { name = "CZ.NIC z.s.p.o", email = "karel.koci@nic.cz" },
